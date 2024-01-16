@@ -1,10 +1,9 @@
 import requests
 import time
-import datetime 
+import datetime
 
-SLACK_BOT_TOKEN = "YOUR_TOKEN"
-SLACK_CHANNEL = "#general"  # Replace with the channel you want to post in
-
+SLACK_BOT_TOKEN = # Replace with slack bot token
+SLACK_CHANNEL =  # Replace with the channel you want to post
 GITHUB_JSON_FEED_URL = "https://raw.githubusercontent.com/joshhighet/ransomwatch/main/posts.json"
 
 def get_latest_victims():
@@ -24,7 +23,7 @@ def format_message(victim_data):
     is_known_member = any(member.lower() in post_title.lower() for member in known_members)
 
     # Check if the post_title ends with ".fr"
-    is_gov_domain = post_title.lower().endswith(".gov")
+    is_gov_domain = post_title.lower().endswith(".au")
 
     # Add @here mention if the condition is met
     if is_known_member or is_gov_domain:
@@ -44,11 +43,16 @@ def send_slack_message(message):
         "channel": SLACK_CHANNEL,
     }
 
-    response = requests.post(
+    try:
+        response = requests.post(
         "https://slack.com/api/chat.postMessage",
         headers={"Authorization": f"Bearer {SLACK_BOT_TOKEN}"},
         json=slack_message,
-    )
+         )
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+    print(response.text)
 
     if response.status_code == 200 and response.json()["ok"]:
         return True
@@ -56,10 +60,11 @@ def send_slack_message(message):
         return False
 
 def main():
-    last_processed_timestamp = datetime.datetime.now()
+    last_processed_timestamp = datetime.datetime.utcnow()
 
     while True:
         latest_victims = get_latest_victims()
+
 
         if latest_victims:
             new_victims = []
@@ -74,6 +79,7 @@ def main():
             if new_victims:
                 for victim_data in new_victims:
                     message = format_message(victim_data)
+                    print(f"Sending message: {message}")
                     success = send_slack_message(message)
 
                     if success:
@@ -82,7 +88,8 @@ def main():
                         print("Failed to send Slack message.")
 
                 # Update the last processed timestamp to the latest one
-                last_processed_timestamp = max(new_victims, key=lambda x: datetime.datetime.strptime(x["discovered"], "%Y-%m-%d %H:%M:%S.%f"))["discovered"]
+                last_processed_timestamp = datetime.datetime.strptime(max(new_victims, key=lambda x: datetime.datetime.strptime(x["discovered"], "%Y-%m-%d %H:%M:%S.%f"))["discovered"], "%Y-%m-%d %H:%M:%S.%f")
+
 
         # Wait for some time before checking for new victims again (e.g., 1 hour)
         time.sleep(3600)

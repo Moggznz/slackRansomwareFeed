@@ -22,7 +22,7 @@ def format_message(victim_data):
     known_members = ["group1", "group2", "group3"]  # Replace with your list of known members
     is_known_member = any(member.lower() in post_title.lower() for member in known_members)
 
-    # Check if the post_title ends with ".fr"
+    # Check if the post_title ends with ".au"
     is_gov_domain = post_title.lower().endswith(".au")
 
     # Add @here mention if the condition is met
